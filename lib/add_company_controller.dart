@@ -17,74 +17,74 @@ class AddCompanyController extends GetxController {
   var agreeLicense = false.obs;
 
   var logoImage = Rx<File?>(null);
+  var isFormValid = false.obs;
 
-  final picker = ImagePicker();
+  // Constants
+  final userId = 7;
+  final companyId = 91;
+  final countryId = 1;
+  final insertedById = 91;
 
-  void pickLogoImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      logoImage.value = File(pickedFile.path);
+  final String accessToken =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJOX1RfTV9Vc2VyX0lEIjoyLCJWX1VzZXJOYW1lIjoiamdhcnVucmFqQGdtYWlsLmNvbSIsImlhdCI6MTc1NDQ4NjQ3NCwiZXhwIjoxNzU0NTcyODc0fQ.sU3QS5WWIHGT29S5qoPtgUa8_8WCeN5gjXn3hTciJ-k';
+
+  void validateForm() {
+    isFormValid.value =
+        companyName.value.isNotEmpty &&
+        companyEmail.value.isNotEmpty &&
+        aboutCompany.value.isNotEmpty &&
+        agreeLicense.value;
+  }
+
+  Future<void> pickLogoImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      logoImage.value = File(picked.path);
     }
   }
 
-  void submitForm() async {
-    if (!formKey.currentState!.validate()) {
-      Get.snackbar(
-        'Form Error',
-        'Please enter all required fields properly.',
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.black,
-      );
-      return;
-    }
-
-    formKey.currentState!.save();
+  Future<void> submitForm() async {
+    if (!formKey.currentState!.validate()) return;
 
     if (!agreeLicense.value) {
-      Get.snackbar('Error', 'You must agree to the license agreement.');
+      Get.snackbar("Agreement Required", "You must agree to the license.");
       return;
     }
 
+    final uri = Uri.parse('https://api.hedvigg-dev.com/api/company/create');
+    final request = http.MultipartRequest('POST', uri);
+
+    request.fields['N_T_M_User_ID'] = userId.toString();
+    request.fields['N_T_M_Company_ID'] = companyId.toString();
+    request.fields['N_T_M_Country_ID'] = countryId.toString();
+    request.fields['V_CompanyName'] = companyName.value;
+    request.fields['V_CompanyEmailID'] = companyEmail.value;
+    request.fields['V_Description'] = aboutCompany.value;
+    request.fields['B_PublicProfile'] = shareProfile.value ? '1' : '0';
+    request.fields['B_AudioVideo'] = agreeMedia.value ? '1' : '0';
+    request.fields['N_InsertedBy_ID'] = insertedById.toString();
+    request.fields['V_PaymentDuration'] = '7';
+    request.fields['N_T_M_LicenseHd_ID'] = '1';
+    request.fields['N_T_M_LicenseCityStateCountry_Link_ID'] = '0';
+
+    if (logoImage.value != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('logo', logoImage.value!.path),
+      );
+    }
+
+    request.headers['accessToken'] = accessToken;
+
     try {
-      final uri = Uri.parse("https://api.hedvigg-dev.com/api/company/create");
-
-      var request = http.MultipartRequest("POST", uri);
-
-      // 🔹 Required Fields
-      request.fields['Content-Type'] = 'multipart/form-data';
-      request.fields['N_T_M_User_ID'] = '1'; // Replace with actual value
-      request.fields['N_T_M_Company_ID'] = '1'; // Replace with actual value
-      request.fields['N_T_M_Country_ID'] = '1'; // Replace with actual value
-      request.fields['V_CompanyName'] = companyName.value;
-      request.fields['V_CompanyEmailID'] = companyEmail.value;
-      request.fields['V_Description'] = aboutCompany.value;
-
-      // 🔸 Optional or additional
-      request.fields['V_PaymentDuration'] = '30'; // example
-      request.fields['B_PublicProfile'] = shareProfile.value ? '1' : '0';
-      request.fields['B_AudioVideo'] = agreeMedia.value ? '1' : '0';
-      request.fields['N_T_M_LicenseHd_ID'] = '1'; // Replace as needed
-      request.fields['N_T_M_LicenseCityStateCountry_Link_ID'] = '1'; // Replace
-      request.fields['N_InsertedBy_ID'] = '1'; // Replace as needed
-
-      if (logoImage.value != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath('logo', logoImage.value!.path),
-        );
-      }
-
-      var response = await request.send();
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Get.snackbar('Success', 'Company created successfully!');
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        Get.snackbar("Success", "Company created successfully!");
       } else {
-        Get.snackbar(
-          'Error',
-          'Failed to create company (${response.statusCode})',
-        );
+        Get.snackbar("Error", "Submission failed: ${response.statusCode}");
       }
     } catch (e) {
-      Get.snackbar('Error', 'Something went wrong: $e');
+      Get.snackbar("Error", "An error occurred: $e");
     }
   }
 }

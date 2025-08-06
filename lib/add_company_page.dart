@@ -10,143 +10,173 @@ class AddCompanyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF9F9F5),
       appBar: AppBar(
-        leading: const BackButton(color: Colors.black),
-        title: const Text('Add Company', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFFF9F9F5),
         elevation: 0,
+        leading: const BackButton(color: Colors.black),
+        title: const Text(
+          "Add Company",
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Form(
           key: controller.formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Company Logo",
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: controller.pickLogoImage,
-                child: Obx(() {
-                  final logo = controller.logoImage.value;
-                  return Container(
-                    width: screenWidth * 0.3,
-                    height: screenWidth * 0.3,
+              const SizedBox(height: 16),
+
+              // Company Logo Title
+              _sectionTitle("Company Logo"),
+
+              // Logo Picker
+              Obx(() {
+                return GestureDetector(
+                  onTap: controller.pickLogoImage,
+                  child: Container(
+                    height: 100,
+                    width: 100,
+                    margin: const EdgeInsets.only(top: 8),
                     decoration: BoxDecoration(
+                      color: Colors.white,
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(12),
-                      color: const Color(0xFFF8F8F4),
                     ),
-                    child: logo == null
-                        ? const Center(
-                            child: Text('+\nLogo', textAlign: TextAlign.center),
-                          )
-                        : ClipRRect(
+                    child: controller.logoImage.value != null
+                        ? ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.file(logo, fit: BoxFit.cover),
+                            child: Image.file(
+                              controller.logoImage.value!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.add,
+                                  size: 24,
+                                  color: Colors.black54,
+                                ),
+                                Text(
+                                  "Logo",
+                                  style: TextStyle(color: Colors.black54),
+                                ),
+                              ],
+                            ),
                           ),
-                  );
-                }),
-              ),
-
-              const SizedBox(height: 24),
-              buildTextField(
-                label: "Company Name",
-                hint: "Enter Company Name",
-                onSaved: (val) => controller.companyName.value = val!.trim(),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Company name is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              buildTextField(
-                label: "Company Email ID",
-                hint: "Enter Company Email ID",
-                onSaved: (val) => controller.companyEmail.value = val!.trim(),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Email is required';
-                  }
-                  if (!GetUtils.isEmail(val.trim())) {
-                    return 'Enter a valid email address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              buildTextField(
-                label: "About Company",
-                hint: "Write About Company..",
-                maxLines: 4,
-                onSaved: (val) => controller.aboutCompany.value = val!.trim(),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Company description is required';
-                  }
-                  return null;
-                },
-              ),
+                  ),
+                );
+              }),
 
               const SizedBox(height: 24),
 
+              // Company Name
+              _sectionTitle("Company Name"),
+              const SizedBox(height: 8),
+              TextFormField(
+                decoration: _inputDecoration("Enter Company Name"),
+                onChanged: (val) => controller.companyName.value = val,
+                validator: (val) =>
+                    val!.isEmpty ? "Company name is required" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Company Email
+              _sectionTitle("Company Email ID"),
+              const SizedBox(height: 8),
+              TextFormField(
+                decoration: _inputDecoration("Enter Company Email ID"),
+                onChanged: (val) => controller.companyEmail.value = val,
+                validator: (val) => val!.isEmpty ? "Email is required" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // About Company
+              _sectionTitle("About Company"),
+              const SizedBox(height: 8),
+              TextFormField(
+                decoration: _inputDecoration("Write About Company.."),
+                maxLines: 3,
+                onChanged: (val) => controller.aboutCompany.value = val,
+                validator: (val) =>
+                    val!.isEmpty ? "Description is required" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Checkboxes
               Obx(
-                () => buildCheckbox(
-                  "I agree to share my company profile.",
-                  controller.shareProfile.value,
-                  (val) => controller.shareProfile.value = val ?? false,
+                () => CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: const Text("I agree to share my company profile."),
+                  value: controller.shareProfile.value,
+                  onChanged: (val) =>
+                      controller.shareProfile.value = val ?? false,
                 ),
               ),
               Obx(
-                () => buildCheckbox(
-                  "I agree to use photos and videos for in social media.",
-                  controller.agreeMedia.value,
-                  (val) => controller.agreeMedia.value = val ?? false,
+                () => CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: const Text(
+                    "I agree to use photos and videos for in social media.",
+                  ),
+                  value: controller.agreeMedia.value,
+                  onChanged: (val) =>
+                      controller.agreeMedia.value = val ?? false,
                 ),
               ),
               Obx(
-                () => buildCheckboxRichText(
-                  const Text.rich(
-                    TextSpan(
-                      text: 'I agree the ',
-                      style: TextStyle(color: Colors.black),
+                () => CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: RichText(
+                    text: TextSpan(
+                      text: "I agree the ",
+                      style: const TextStyle(color: Colors.black),
                       children: [
                         TextSpan(
-                          text: 'license agreement.',
-                          style: TextStyle(color: Colors.blue),
+                          text: "license agreement.",
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  controller.agreeLicense.value,
-                  (val) => controller.agreeLicense.value = val ?? false,
+                  value: controller.agreeLicense.value,
+                  onChanged: (val) =>
+                      controller.agreeLicense.value = val ?? false,
                 ),
               ),
+              const SizedBox(height: 30),
 
-              const SizedBox(height: 32),
-
+              // Submit Button
               SizedBox(
                 width: double.infinity,
+                height: 48,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8C8F6F),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: const Color(0xFF888A6D),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onPressed: controller.submitForm,
-                  child: const Text('Continue', style: TextStyle(fontSize: 16)),
+                  child: const Text(
+                    "Continue",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -154,70 +184,37 @@ class AddCompanyPage extends StatelessWidget {
     );
   }
 
-  Widget buildTextField({
-    required String label,
-    required String hint,
-    required FormFieldSetter<String> onSaved,
-    required FormFieldValidator<String> validator,
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withAlpha((0.1 * 255).toInt()),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextFormField(
-            maxLines: maxLines,
-            onSaved: onSaved,
-            validator: validator,
-            decoration: InputDecoration(
-              hintText: hint,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-            ),
-          ),
-        ),
-      ],
+  // Title Widget
+  Widget _sectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontWeight: FontWeight.w500,
+        fontSize: 14,
+        color: Colors.black87,
+      ),
     );
   }
 
-  Widget buildCheckbox(String label, bool value, Function(bool?) onChanged) {
-    return CheckboxListTile(
-      controlAffinity: ListTileControlAffinity.leading,
-      contentPadding: EdgeInsets.zero,
-      title: Text(label),
-      value: value,
-      onChanged: onChanged,
-    );
-  }
-
-  Widget buildCheckboxRichText(
-    Widget label,
-    bool value,
-    Function(bool?) onChanged,
-  ) {
-    return CheckboxListTile(
-      controlAffinity: ListTileControlAffinity.leading,
-      contentPadding: EdgeInsets.zero,
-      title: label,
-      value: value,
-      onChanged: onChanged,
+  // Input Field Decoration
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.black),
+      ),
     );
   }
 }
